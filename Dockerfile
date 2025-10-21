@@ -4,4 +4,4 @@ WORKDIR /home/gradle/src
 
 RUN gradle build
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/home/gradle/src/build/libs/infra-microservices-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

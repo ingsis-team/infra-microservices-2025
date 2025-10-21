@@ -4,68 +4,67 @@ services:
 
   snippet-api:
     container_name: 'snippet-api'
-    image: 'ghcr.io/ingsis-team/ingsis-snippet-service:latest'
+    image: 'ghcr.io/ingsis-team/snippet-service-2025:latest'
     pull_policy: always
     expose:
-      - "8089"
+      - "8080"
     ports:
-      - "8089:8089"
+      - "8080:8080"
     depends_on:
       - snippet-db
     environment:
-      DB_HOST: snippet-db
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${POSTGRES_DB}
-      DB_USER: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_SNIPPET_DB}
+      DB_USER: ${POSTGRES_SNIPPET_USER}
+      DB_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
+      DB_HOST: ${DB_SNIPPET_HOST}
+      DB_PORT: ${DB_SNIPPET_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
-      ASSET_URL: ${ASSET_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
-      AUTH0_SERVER_URI: ${AUTH0_SERVER_URI}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
 
   snippet-db:
     container_name: 'snippet-db'
-    image: postgres:alpine
+    image: postgres:17
     environment:
       POSTGRES_USER: ${POSTGRES_SNIPPET_USER}
       POSTGRES_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
       POSTGRES_DB: ${POSTGRES_SNIPPET_DB}
     ports:
-      - "${DB_SNIPPET_PORT}:${DB_SNIPPET_PORT}"
+      - "5432:5432"
     volumes:
       - snippet_volume:/var/lib/postgresql/data
 
-  permission-db:
-    container_name: 'permission-db'
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${POSTGRES_PERMISSION_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_PERMISSION_DB}
-    ports:
-      - "${DB_PERMISSION_PORT}:5432"
-    volumes:
-      - permission_volume:/var/lib/postgresql/data
-
   permission-api:
     container_name: 'permission-api'
-    image: 'ghcr.io/ingsis-team/ingsis-permission-service:latest'
+    image: 'ghcr.io/ingsis-team/permission-service-2025:latest'
     environment:
       DB_USER: ${POSTGRES_PERMISSION_USER}
       DB_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
       DB_NAME: ${POSTGRES_PERMISSION_DB}
-      DB_HOST: permission-db
+      DB_HOST: ${DB_PERMISSION_HOST}
       DB_PORT: ${DB_PERMISSION_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
     depends_on:
       - permission-db
 
-  printscript-api:
-    container_name: 'printscript-api'
-    image: 'ghcr.io/ingsis-team/ingsis-printscript-service:latest'
-    pull_policy: always
-    depends_on:
-      - printscript-db
+  permission-db:
+    container_name: 'permission-db'
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_PERMISSION_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_PERMISSION_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - permission_volume:/var/lib/postgresql/data
+
+#  printscript-api:
+#    container_name: 'printscript-api'
+#    image: 'ghcr.io/ingsis-team/ingsis-printscript-service:latest'
+#    pull_policy: always
+#    depends_on:
+#      - printscript-db
+
+volumes:
+  snippet_volume:
+  permission_volume:
