@@ -1,70 +1,125 @@
-version: '3.7'
+version: '3.9'
 
 services:
 
+  # --- SNIPPET SERVICE ---
   snippet-api:
-    container_name: 'snippet-api'
-    image: 'ghcr.io/ingsis-team/snippet-service-2025:latest'
+    container_name: "snippet-api-${ENVIRONMENT}"
+    image: "ghcr.io/ingsis-team/snippet-service-2025:${IMAGE_TAG}"
     pull_policy: always
     expose:
       - "8080"
     ports:
-      - "8080:8080"
+      - "${API_SNIPPET_PORT}:8080"
     depends_on:
       - snippet-db
+      - redis
     environment:
       DB_NAME: ${POSTGRES_SNIPPET_DB}
       DB_USER: ${POSTGRES_SNIPPET_USER}
       DB_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
       DB_HOST: ${DB_SNIPPET_HOST}
       DB_PORT: ${DB_SNIPPET_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
 
   snippet-db:
-    container_name: 'snippet-db'
+    container_name: "snippet-db-${ENVIRONMENT}"
     image: postgres:17
     environment:
       POSTGRES_USER: ${POSTGRES_SNIPPET_USER}
       POSTGRES_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
       POSTGRES_DB: ${POSTGRES_SNIPPET_DB}
     ports:
-      - "5432:5432"
+      - "${DB_SNIPPET_HOST_PORT}:5432"
     volumes:
       - snippet_volume:/var/lib/postgresql/data
 
+  # --- PERMISSION SERVICE ---
   permission-api:
-    container_name: 'permission-api'
-    image: 'ghcr.io/ingsis-team/permission-service-2025:latest'
+    container_name: "permission-api-${ENVIRONMENT}"
+    image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
+    expose:
+      - "8080"
+    ports:
+      - "${API_PERMISSION_PORT}:8080"
+    depends_on:
+      - permission-db
+      - redis
     environment:
       DB_USER: ${POSTGRES_PERMISSION_USER}
       DB_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
       DB_NAME: ${POSTGRES_PERMISSION_DB}
       DB_HOST: ${DB_PERMISSION_HOST}
       DB_PORT: ${DB_PERMISSION_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
-    depends_on:
-      - permission-db
 
   permission-db:
-    container_name: 'permission-db'
+    container_name: "permission-db-${ENVIRONMENT}"
     image: postgres:17
     environment:
       POSTGRES_USER: ${POSTGRES_PERMISSION_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
       POSTGRES_DB: ${POSTGRES_PERMISSION_DB}
     ports:
-      - "5433:5432"
+      - "${DB_PERMISSION_HOST_PORT}:5432"
     volumes:
       - permission_volume:/var/lib/postgresql/data
 
-#  printscript-api:
-#    container_name: 'printscript-api'
-#    image: 'ghcr.io/ingsis-team/ingsis-printscript-service:latest'
-#    pull_policy: always
-#    depends_on:
-#      - printscript-db
+  # --- PRINTSCRIPT SERVICE ---
+  printscript-api:
+    container_name: "printscript-api-${ENVIRONMENT}"
+    image: "ghcr.io/ingsis-team/printscript-service-2025:${IMAGE_TAG}"
+    pull_policy: always
+    expose:
+      - "8080"
+    ports:
+      - "${API_PRINTSCRIPT_PORT}:8080"
+    depends_on:
+      - printscript-db
+      - redis
+    environment:
+      DB_USER: ${POSTGRES_PRINTSCRIPT_USER}
+      DB_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
+      DB_NAME: ${POSTGRES_PRINTSCRIPT_DB}
+      DB_HOST: ${DB_PRINTSCRIPT_HOST}
+      DB_PORT: ${DB_PRINTSCRIPT_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      PERMISSION_URL: ${PERMISSION_URL}
+      PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
+
+  printscript-db:
+    container_name: "printscript-db-${ENVIRONMENT}"
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_PRINTSCRIPT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_PRINTSCRIPT_DB}
+    ports:
+      - "${DB_PRINTSCRIPT_HOST_PORT}:5432"
+    volumes:
+      - printscript_volume:/var/lib/postgresql/data
+
+  # --- REDIS SERVICE ---
+  redis:
+    container_name: "redis-${ENVIRONMENT}"
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "${REDIS_HOST_PORT}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   snippet_volume:
   permission_volume:
+  printscript_volume:
