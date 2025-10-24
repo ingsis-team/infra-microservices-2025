@@ -83,15 +83,32 @@ services:
       - printscript-db
       - redis
     environment:
-      DB_USER: ${POSTGRES_PRINTSCRIPT_USER}
-      DB_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
-      DB_NAME: ${POSTGRES_PRINTSCRIPT_DB}
-      DB_HOST: ${DB_PRINTSCRIPT_HOST}
-      DB_PORT: ${DB_PRINTSCRIPT_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_PRINTSCRIPT_HOST}:${DB_PRINTSCRIPT_PORT}/${POSTGRES_PRINTSCRIPT_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_PRINTSCRIPT_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_PROFILES_ACTIVE: docker
+
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+
+      ASSET_URL: ${ASSET_URL}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
+
+      STREAM_KEY_LINT: ${STREAM_KEY_LINT}
+      STREAM_KEY_FORMAT: ${STREAM_KEY_FORMAT}
+      GROUPS_PRODUCT: ${GROUPS_PRODUCT}
+      GROUPS_PRODUCT1: ${GROUPS_PRODUCT1}
+
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080 || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   printscript-db:
     container_name: "printscript-db-${ENVIRONMENT}"
