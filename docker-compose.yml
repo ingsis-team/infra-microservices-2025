@@ -47,6 +47,8 @@ services:
   permission-api:
     container_name: "permission-api-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
+    build:
+      context: ../permission-service-2025
     expose:
       - "8080"
     ports:
@@ -80,7 +82,8 @@ services:
   printscript-api:
     container_name: "printscript-api-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/printscript-service-2025:${IMAGE_TAG}"
-    pull_policy: always
+    build:
+      context: ../printscript-service-2025
     expose:
       - "8080"
     ports:
