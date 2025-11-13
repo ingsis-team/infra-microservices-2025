@@ -6,7 +6,8 @@ services:
   snippet-api:
     container_name: "snippet-api-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/snippet-service-2025:${IMAGE_TAG}"
-    pull_policy: always
+    build:
+      context: ../snippet-service-2025
     expose:
       - "8080"
     ports:
@@ -24,6 +25,11 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
+      AUTH_SERVER_URI: ${AUTH_SERVER_URI:-}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+      AUTH0_MANAGEMENT_TOKEN: ${AUTH0_MANAGEMENT_TOKEN:-}
+      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 
   snippet-db:
     container_name: "snippet-db-${ENVIRONMENT}"
@@ -98,10 +104,14 @@ services:
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
 
-      STREAM_KEY_LINT: ${STREAM_KEY_LINT}
-      STREAM_KEY_FORMAT: ${STREAM_KEY_FORMAT}
-      GROUPS_PRODUCT: ${GROUPS_PRODUCT}
-      GROUPS_PRODUCT1: ${GROUPS_PRODUCT1}
+      STREAM_KEY_LINT: ${STREAM_KEY_LINT:-lint}
+      STREAM_KEY_FORMAT: ${STREAM_KEY_FORMAT:-format}
+      STREAM_KEY_TEST: ${STREAM_KEY_TEST:-test}
+      GROUPS_PRODUCT: ${GROUPS_PRODUCT:-product}
+      GROUPS_PRODUCT1: ${GROUPS_PRODUCT1:-product1}
+      GROUPS_PRODUCT2: ${GROUPS_PRODUCT2:-product2}
+      GITHUB_USERNAME: ${GITHUB_USERNAME:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
 
     healthcheck:
       test: [ "CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080 || exit 1" ]
