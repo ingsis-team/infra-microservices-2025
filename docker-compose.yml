@@ -50,9 +50,9 @@ services:
     build:
       context: ../permission-service-2025
     expose:
-      - "8080"
+      - "8081"
     ports:
-      - "${API_PERMISSION_PORT}:8080"
+      - "${API_PERMISSION_PORT}:8081"
     depends_on:
       - permission-db
       - redis
@@ -97,6 +97,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
 
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
