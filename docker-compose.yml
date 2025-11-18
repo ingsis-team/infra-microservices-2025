@@ -1,17 +1,63 @@
 version: '3.9'
 
+networks:
+  app-network:
+    driver: bridge
+
 services:
 
+  # --- REVERSE PROXY (NGINX + Let's Encrypt) ---
+  reverse-proxy:
+    container_name: "reverse-proxy-${ENVIRONMENT}"
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - web
+      - snippet-service
+      - permission-service
+      - printscript-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # --- FRONTEND (React + Auth0) ---
+  web:
+    container_name: "frontend-${ENVIRONMENT}"
+    image: "ghcr.io/ingsis-team/printscript-ui:latest"
+    environment:
+        - FRONTEND_URL=${FRONTEND_URL}
+        - BACKEND_URL=${BACKEND_URL}
+        - PRINTSCRIPT_SERVICE_URL=${PRINTSCRIPT_URL}
+        - AUTH0_USERNAME=${AUTH0_USERNAME:-}
+        - AUTH0_PASSWORD=${AUTH0_PASSWORD:-}
+        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+        - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+        - VITE_AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+    expose:
+      - "80"
+    networks:
+      - app-network
+    restart: unless-stopped
+
   # --- SNIPPET SERVICE ---
-  snippet-api:
-    container_name: "snippet-api-${ENVIRONMENT}"
+  snippet-service:
+    container_name: "snippet-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/snippet-service-2025:${IMAGE_TAG}"
     build:
       context: ../snippet-service-2025
     expose:
       - "8080"
-    ports:
-      - "${API_SNIPPET_PORT}:8080"
     depends_on:
       - snippet-db
       - redis
@@ -20,16 +66,19 @@ services:
       DB_USER: ${POSTGRES_SNIPPET_USER}
       DB_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
       DB_HOST: ${DB_SNIPPET_HOST}
-      DB_PORT: ${DB_SNIPPET_PORT}
+      DB_PORT: ${DB_SNIPPET_HOST_PORT}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
-      AUTH_SERVER_URI: ${AUTH_SERVER_URI:-}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH_SERVER_URI: ${AUTH_SERVER_URI}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MANAGEMENT_TOKEN: ${AUTH0_MANAGEMENT_TOKEN:-}
       SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+    networks:
+      - app-network
+    restart: unless-stopped
 
   snippet-db:
     container_name: "snippet-db-${ENVIRONMENT}"
@@ -38,21 +87,22 @@ services:
       POSTGRES_USER: ${POSTGRES_SNIPPET_USER}
       POSTGRES_PASSWORD: ${POSTGRES_SNIPPET_PASSWORD}
       POSTGRES_DB: ${POSTGRES_SNIPPET_DB}
-    ports:
-      - "${DB_SNIPPET_HOST_PORT}:5432"
+    expose:
+      - "5432"
     volumes:
       - snippet_volume:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
 
   # --- PERMISSION SERVICE ---
-  permission-api:
-    container_name: "permission-api-${ENVIRONMENT}"
+  permission-service:
+    container_name: "permission-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
     build:
       context: ../permission-service-2025
     expose:
       - "8081"
-    ports:
-      - "${API_PERMISSION_PORT}:8081"
     depends_on:
       - permission-db
       - redis
@@ -60,11 +110,17 @@ services:
       DB_USER: ${POSTGRES_PERMISSION_USER}
       DB_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
       DB_NAME: ${POSTGRES_PERMISSION_DB}
-      DB_HOST: ${DB_PERMISSION_HOST}
+      DB_HOST: ${DB_PERMISSION_HOST_PORT}
       DB_PORT: ${DB_PERMISSION_PORT}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       PERMISSION_URL: ${PERMISSION_URL}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH_SERVER_URI: ${AUTH_SERVER_URI}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+    networks:
+      - app-network
+    restart: unless-stopped
 
   permission-db:
     container_name: "permission-db-${ENVIRONMENT}"
@@ -73,26 +129,27 @@ services:
       POSTGRES_USER: ${POSTGRES_PERMISSION_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PERMISSION_PASSWORD}
       POSTGRES_DB: ${POSTGRES_PERMISSION_DB}
-    ports:
-      - "${DB_PERMISSION_HOST_PORT}:5432"
+    expose:
+      - "5432"
     volumes:
       - permission_volume:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
 
   # --- PRINTSCRIPT SERVICE ---
-  printscript-api:
-    container_name: "printscript-api-${ENVIRONMENT}"
+  printscript-service:
+    container_name: "printscript-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/printscript-service-2025:${IMAGE_TAG}"
     build:
       context: ../printscript-service-2025
     expose:
-      - "8080"
-    ports:
-      - "${API_PRINTSCRIPT_PORT}:8080"
+      - "8082"
     depends_on:
       - printscript-db
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_PRINTSCRIPT_HOST}:${DB_PRINTSCRIPT_PORT}/${POSTGRES_PRINTSCRIPT_DB}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_PRINTSCRIPT_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_PRINTSCRIPT_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
@@ -100,7 +157,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
 
-      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}	
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
 
       ASSET_URL: ${ASSET_URL}
@@ -117,9 +174,15 @@ services:
       GROUPS_PRODUCT2: ${GROUPS_PRODUCT2:-product2}
       GITHUB_USERNAME: ${GITHUB_USERNAME:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH_SERVER_URI: ${AUTH_SERVER_URI}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
 
+    networks:
+      - app-network
+    restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080 || exit 1" ]
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8082/actuator/health || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -132,18 +195,23 @@ services:
       POSTGRES_USER: ${POSTGRES_PRINTSCRIPT_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
       POSTGRES_DB: ${POSTGRES_PRINTSCRIPT_DB}
-    ports:
-      - "${DB_PRINTSCRIPT_HOST_PORT}:5432"
+    expose:
+      - "5432"
     volumes:
       - printscript_volume:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
 
   # --- REDIS SERVICE ---
   redis:
     container_name: "redis-${ENVIRONMENT}"
     image: redis:7-alpine
-    restart: always
-    ports:
-      - "${REDIS_HOST_PORT}:6379"
+    expose:
+      - "6379"
+    networks:
+      - app-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -155,3 +223,4 @@ volumes:
   snippet_volume:
   permission_volume:
   printscript_volume:
+  nginx-logs:

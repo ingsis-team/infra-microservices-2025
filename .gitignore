@@ -1,1 +1,36 @@
+# Environment variables
 .env
+.env.local
+.env.prod
+.env.dev
+DEPLOYMENT_GUIDE.md
+ENV_VARIABLES.md
+QUICK_START.md
+README.md
+
+
+# Let's Encrypt certificates
+certbot/
+
+# Docker volumes
+volumes/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+tmp/
+temp/
