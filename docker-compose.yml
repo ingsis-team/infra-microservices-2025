@@ -7,34 +7,13 @@ networks:
 services:
 
   # --- REVERSE PROXY (NGINX + Let's Encrypt) ---
-  reverse-proxy:
-    container_name: "reverse-proxy-${ENVIRONMENT}"
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - nginx-logs:/var/log/nginx
-    depends_on:
-      - web
-      - snippet-service
-      - permission-service
-      - printscript-service
-    networks:
-      - app-network
-    restart: unless-stopped
+
 
   # --- FRONTEND (React + Auth0) ---
   web:
     container_name: "frontend-${ENVIRONMENT}"
-    image: "ghcr.io/ingsis-team/printscript-ui:latest"
+    build:
+      context: ..\printscript-ui
     environment:
         - FRONTEND_URL=${FRONTEND_URL}
         - BACKEND_URL=${BACKEND_URL}
@@ -45,8 +24,8 @@ services:
         - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
         - VITE_AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
         - auth0_domain=${VITE_AUTH0_DOMAIN}
-    expose:
-      - "80"
+    ports:
+      - "80:80"
     networks:
       - app-network
     restart: unless-stopped
@@ -55,8 +34,8 @@ services:
   snippet-service:
     container_name: "snippet-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/snippet-service-2025:${IMAGE_TAG}"
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     depends_on:
       snippet-db:
         condition: service_healthy
@@ -106,8 +85,8 @@ services:
   permission-service:
     container_name: "permission-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
-    expose:
-      - "8081"
+    ports:
+      - "8081:8080"
     depends_on:
       permission-db:
         condition: service_healthy
@@ -154,8 +133,8 @@ services:
   printscript-service:
     container_name: "printscript-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/printscript-service-2025:${IMAGE_TAG}"
-    expose:
-      - "8082"
+    ports:
+      - "8082:8080"
     depends_on:
       printscript-db:
         condition: service_healthy
