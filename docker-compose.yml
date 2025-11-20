@@ -86,7 +86,7 @@ services:
     container_name: "permission-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
     ports:
-      - "8081:8080"
+      - "8081:8081"
     depends_on:
       permission-db:
         condition: service_healthy
@@ -148,6 +148,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
 
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
