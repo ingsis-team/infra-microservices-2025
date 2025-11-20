@@ -11,7 +11,7 @@ services:
 
   # --- FRONTEND (React + Auth0) ---
   printscript-ui:
-    container_name: "printscript-ui-${ENVIRONMENT}"
+    container_name: "printscript-ui"
     image: "ghcr.io/ingsis-team/printscript-ui:latest"
     environment:
         - FRONTEND_URL=${FRONTEND_URL}
