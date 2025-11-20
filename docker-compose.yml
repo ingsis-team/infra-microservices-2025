@@ -11,7 +11,7 @@ services:
 
   # --- FRONTEND (React + Auth0) ---
   web:
-    container_name: "frontend-${ENVIRONMENT}"
+    container_name: "printscript-ui-${ENVIRONMENT}"
     build:
       context: ..\printscript-ui
     environment:
@@ -21,7 +21,7 @@ services:
         - AUTH0_USERNAME=${AUTH0_USERNAME:-}
         - AUTH0_PASSWORD=${AUTH0_PASSWORD:-}
         - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
-        - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+        - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}-
         - VITE_AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
         - auth0_domain=${VITE_AUTH0_DOMAIN}
     ports:
