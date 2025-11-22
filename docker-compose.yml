@@ -37,6 +37,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      asset-service:
+        condition: service_started
     environment:
       DB_NAME: ${POSTGRES_SNIPPET_DB}
       DB_USER: ${POSTGRES_SNIPPET_USER}
@@ -47,6 +49,7 @@ services:
       REDIS_PORT: 6379
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
+      ASSET_URL: asset-service:8080
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH_SERVER_URI: ${AUTH_SERVER_URI}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
@@ -214,8 +217,40 @@ services:
       retries: 5
       start_period: 10s
 
+  # --- ASSET SERVICE ---
+  asset-service:
+    container_name: "asset-service-${ENVIRONMENT}"
+    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
+    ports:
+      - "8083:8080"
+    depends_on:
+      azurite:
+        condition: service_started
+    environment:
+      AZURE_HOST: "http://azurite"
+      NEW_RELIC_APP_NAME: "asset-service"
+      NEW_RELIC_AGENT_ENABLED: false
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  azurite:
+    container_name: "azurite-${ENVIRONMENT}"
+    image: mcr.microsoft.com/azure-storage/azurite
+    hostname: azurite
+    restart: unless-stopped
+    expose:
+      - "10000"
+      - "10001"
+      - "10002"
+    volumes:
+      - azurite_volume:/workspace
+    networks:
+      - app-network
+
 volumes:
   snippet_volume:
   permission_volume:
   printscript_volume:
+  azurite_volume:
   nginx-logs:
