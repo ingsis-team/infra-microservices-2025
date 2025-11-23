@@ -10,7 +10,7 @@ if [ ! -f "$CERT_PATH" ]; then
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
         -keyout "$CERT_DIR/privkey.pem" \
         -out "$CERT_DIR/fullchain.pem" \
-        -subj "/CN=super-snippet.duckdns.org" 2>/dev/null || true
+        -subj "/CN=snippet-prueba.duckdns.org" 2>/dev/null || true
     touch "$CERT_DIR/.dummy" 2>/dev/null || true
     echo "Certificados dummy creados."
 fi
