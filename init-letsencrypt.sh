@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CERT_PATH="/etc/letsencrypt/live/super-snippet.duckdns.org/fullchain.pem"
-CERT_DIR="/etc/letsencrypt/live/super-snippet.duckdns.org"
+CERT_PATH="/etc/letsencrypt/live/snippet-prueba.duckdns.org/fullchain.pem"
+CERT_DIR="/etc/letsencrypt/live/snippet-prueba.duckdns.org"
 
 # Crear certificados dummy primero para que nginx pueda iniciar
 if [ ! -f "$CERT_PATH" ]; then
@@ -36,7 +36,7 @@ if [ -f "$CERT_DIR/.dummy" ]; then
     
     certbot certonly --webroot \
         -w /var/www/certbot \
-        -d super-snippet.duckdns.org \
+        -d snippet-prueba.duckdns.org \
         --email ${CERTBOT_EMAIL:-admin@example.com} \
         --agree-tos \
         --no-eff-email \
