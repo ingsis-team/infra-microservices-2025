@@ -135,7 +135,27 @@ services:
       - app-network
     restart: unless-stopped
 
+  # --- DUCKDNS SERVICE ---
+  duckdns:
+    container_name: 'duckdns'
+    image: lscr.io/linuxserver/duckdns:version-d63af1c1
+    environment:
+      - SUBDOMAINS= ${DUCKDNS_SUBDOMAIN}
+      - TOKEN= ${DUCKDNS_TOKEN}
+    networks:
+      - app-network
+    restart: unless-stopped
 
+  # --- CERTBOT SERVICE ---
+  certbot:
+    container_name: 'certbot'
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    networks:
+      - app-network
+    restart: unless-stopped
 
   # --- PRINTSCRIPT SERVICE ---
   printscript-service:
