@@ -126,13 +126,12 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-      - ./init-letsencrypt.sh:/init-letsencrypt.sh:ro
+      - ./init-letsencrypt.sh:/init-letsencrypt.sh
     depends_on:
       - printscript-ui
       - snippet-service
       - permission-service
       - printscript-service
-      - certbot
       - duckdns
     command: >
       sh -c "
@@ -152,19 +151,8 @@ services:
     container_name: 'duckdns'
     image: lscr.io/linuxserver/duckdns:version-d63af1c1
     environment:
-      - SUBDOMAINS= ${DUCKDNS_SUBDOMAIN}
-      - TOKEN= ${DUCKDNS_TOKEN}
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # --- CERTBOT SERVICE ---
-  certbot:
-    container_name: 'certbot'
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN}
+      - TOKEN=${DUCKDNS_TOKEN}
     networks:
       - app-network
     restart: unless-stopped

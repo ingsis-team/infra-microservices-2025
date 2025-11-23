@@ -15,12 +15,20 @@ if [ ! -f "$CERT_PATH" ]; then
     echo "Certificados dummy creados."
 fi
 
-# Iniciar nginx en background para que certbot pueda validar
-echo "Iniciando nginx en background..."
-nginx -g 'daemon on;'
-
-# Esperar a que nginx esté listo
-sleep 5
+# Verificar si nginx ya está corriendo intentando hacer reload
+if nginx -s reload 2>/dev/null; then
+    echo "Nginx ya está corriendo. Saltando inicialización."
+    # Si nginx ya está corriendo, solo hacer las operaciones de certbot y mantener el proceso
+    NGINX_ALREADY_RUNNING=true
+else
+    # Iniciar nginx en background para que certbot pueda validar
+    echo "Iniciando nginx en background..."
+    nginx -g 'daemon on;'
+    NGINX_ALREADY_RUNNING=false
+    
+    # Esperar a que nginx esté listo
+    sleep 5
+fi
 
 # Intentar obtener certificados reales si están usando dummy
 if [ -f "$CERT_DIR/.dummy" ]; then
@@ -44,6 +52,18 @@ else
     echo "Certificados reales ya existen."
 fi
 
-# Mantener nginx corriendo en foreground (reemplaza el proceso actual)
-echo "Manteniendo nginx corriendo..."
-exec nginx -g 'daemon off;'
+# Si nginx ya estaba corriendo, mantener el proceso actual (wait infinito)
+if [ "$NGINX_ALREADY_RUNNING" = true ]; then
+    echo "Nginx ya está corriendo. Manteniendo el proceso..."
+    # Mantener el script corriendo para que el contenedor no termine
+    tail -f /dev/null
+else
+    # Si nginx está en background, detenerlo y reiniciarlo en foreground
+    echo "Deteniendo nginx en background para iniciarlo en foreground..."
+    nginx -s quit
+    sleep 2
+    
+    # Mantener nginx corriendo en foreground (reemplaza el proceso actual)
+    echo "Manteniendo nginx corriendo en foreground..."
+    exec nginx -g 'daemon off;'
+fi
