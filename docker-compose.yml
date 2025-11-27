@@ -72,7 +72,7 @@ services:
     container_name: "permission-service-${ENVIRONMENT}"
     image: "ghcr.io/ingsis-team/permission-service-2025:${IMAGE_TAG}"
     ports:
-      - "8081:8081"
+      - "8081:8080"
     depends_on:
       permission-db:
         condition: service_healthy
