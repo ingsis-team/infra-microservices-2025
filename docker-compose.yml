@@ -90,6 +90,7 @@ services:
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH_SERVER_URI: ${AUTH_SERVER_URI}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      SERVER_PORT: 8080
     networks:
       - app-network
     restart: unless-stopped
