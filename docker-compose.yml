@@ -9,7 +9,7 @@ services:
   # --- FRONTEND (React + Auth0) ---
   printscript-ui:
     container_name: "printscript-ui"
-    image: "ghcr.io/ingsis-team/printscript-ui:sha-c6ccc753"
+    image: "ghcr.io/ingsis-team/printscript-ui:sha-d5ec51eb"
     expose:
       - "80"
     networks:
@@ -48,6 +48,7 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MANAGEMENT_TOKEN: ${AUTH0_MANAGEMENT_TOKEN:-}
       SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+    
     networks:
       - app-network
     restart: unless-stopped
