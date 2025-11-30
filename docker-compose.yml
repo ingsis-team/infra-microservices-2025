@@ -9,7 +9,7 @@ services:
   # --- FRONTEND (React + Auth0) ---
   printscript-ui:
     container_name: "printscript-ui"
-    image: "ghcr.io/ingsis-team/printscript-ui:sha-ad135ec6"
+    image: "ghcr.io/ingsis-team/printscript-ui:sha-d5ec51eb"
     expose:
       - "80"
     networks:
@@ -35,6 +35,12 @@ services:
       DB_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME_SNIPPET}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+      ASSET_URL: ${ASSET_URL}
       PERMISSION_URL: ${PERMISSION_URL}
       PRINTSCRIPT_URL: ${PRINTSCRIPT_URL}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
@@ -42,6 +48,7 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MANAGEMENT_TOKEN: ${AUTH0_MANAGEMENT_TOKEN:-}
       SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+    
     networks:
       - app-network
     restart: unless-stopped
@@ -86,10 +93,14 @@ services:
       DB_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME_PERMISSION}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
       PERMISSION_URL: ${PERMISSION_URL}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH_SERVER_URI: ${AUTH_SERVER_URI}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      SERVER_PORT: 8080
     networks:
       - app-network
     restart: unless-stopped
@@ -169,6 +180,9 @@ services:
       redis:
         condition: service_healthy
     environment:
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME_PRINTSCRIPT}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
       SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_PRINTSCRIPT_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_PRINTSCRIPT_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PRINTSCRIPT_PASSWORD}
@@ -246,8 +260,40 @@ services:
       retries: 5
       start_period: 10s
 
+    # --- ASSET SERVICE ---
+  asset-service:
+    container_name: "asset-service-${ENVIRONMENT}"
+    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
+    ports:
+      - "8083:8080"
+    depends_on:
+      azurite:
+        condition: service_started
+    environment:
+      AZURE_HOST: "http://azurite"
+      NEW_RELIC_APP_NAME: "asset-service"
+      NEW_RELIC_AGENT_ENABLED: false
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  azurite:
+    container_name: "azurite-${ENVIRONMENT}"
+    image: mcr.microsoft.com/azure-storage/azurite
+    hostname: azurite
+    restart: unless-stopped
+    expose:
+      - "10000"
+      - "10001"
+      - "10002"
+    volumes:
+      - azurite_volume:/workspace
+    networks:
+      - app-network
+
 volumes:
   snippet_volume:
   permission_volume:
   printscript_volume:
+  azurite_volume:
   nginx-logs:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CERT_PATH="/etc/letsencrypt/live/snippet-prueba.duckdns.org/fullchain.pem"
-CERT_DIR="/etc/letsencrypt/live/snippet-prueba.duckdns.org"
+CERT_PATH="/etc/letsencrypt/live/snippet-prueba.duckdns.org-0001/fullchain.pem"
+CERT_DIR="/etc/letsencrypt/live/snippet-prueba.duckdns.org-0001"
 
 # Crear certificados dummy primero para que nginx pueda iniciar
 if [ ! -f "$CERT_PATH" ]; then
