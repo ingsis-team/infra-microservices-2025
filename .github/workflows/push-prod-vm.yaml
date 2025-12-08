@@ -1,0 +1,27 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - dev
+      - ngnix
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deployment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST_PROD }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}  
+          script: |
+            cd infra-microservices-2025
+            docker compose -f docker-compose.prod.yml stop
+            git pull
+            docker compose -f docker-compose.prod.yml up -d --build
