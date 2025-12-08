@@ -9,7 +9,7 @@ services:
   # --- FRONTEND (React + Auth0) ---
   printscript-ui:
     container_name: "printscript-ui"
-    image: "ghcr.io/ingsis-team/printscript-ui:sha-d5ec51eb"
+    image: "ghcr.io/ingsis-team/printscript-ui:sha-cc977890"
     expose:
       - "80"
     networks:
